@@ -29,6 +29,8 @@ std::vector<float> readAudioFile(const char *filename, int targetSampleRate = 22
         monoSamples = samples; // Already mono, so no need to change
     }
 
+    return monoSamples;
+
     // Resample audio to target sample rate (22kHz)
     int originalSampleRate = sfinfo.samplerate;
     if (originalSampleRate == targetSampleRate) {
@@ -66,16 +68,17 @@ int main()
 
     // Create session options
     Ort::SessionOptions session_options;
-    session_options.SetIntraOpNumThreads(1);
+    session_options.SetIntraOpNumThreads(10);
     session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
 
     // Create session
     Ort::Session session(env, "./rfft_model.onnx", session_options);
     Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
 
-    std::vector<float> input_tensor_values = readAudioFile("../audio/sax.wav"); // Example input, replace with actual audio data
+    std::vector<float> input_tensor_values = readAudioFile("../audio/small2.wav"); // Example input, replace with actual audio data
     int inp_shape = input_tensor_values.size();
     std::cout<<inp_shape<<std::endl;
+    // inp_shape = 661127;
     std::vector<int64_t> input_shape = {inp_shape};
     Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
         memoryInfo, 
@@ -85,7 +88,8 @@ int main()
         input_shape.size());
 
     // Prepare output tensor
-    int out_shape = (int)round((double)inp_shape/2);
+    int out_shape = inp_shape % 2 == 0? inp_shape/2 + 1 : (inp_shape + 1) / 2;
+    // out_shape = 330564;
     std::vector<float> output_tensor_values(out_shape); // Allocate space for 14405 elements
     std::vector<int64_t> output_shape = {out_shape};
 

@@ -8,7 +8,7 @@ class AudioFileException(Exception):
 
 def load_audio(audio_path):
     try:
-        audio,_ = librosa.load(os.path.join(audio_path))
+        audio,_ = librosa.load(os.path.join(audio_path),sr=None)
         return torch.tensor(audio)
         return (audio)
     
@@ -17,5 +17,6 @@ def load_audio(audio_path):
 
 def apply_rfft(audio):
     rfft_mag = torch.fft.rfft(audio)
-    return abs(rfft_mag)
+    rfft_mag = abs(rfft_mag)
+    return rfft_mag
     
