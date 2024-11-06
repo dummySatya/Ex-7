@@ -1,0 +1,9 @@
+[
+{"cat" : "Session","pid" :211958,"tid" :211958,"dur" :266,"ts" :1,"ph" : "X","name" :"model_loading_uri","args" : {}},
+{"cat" : "Session","pid" :211958,"tid" :211958,"dur" :2181,"ts" :270,"ph" : "X","name" :"session_initialization","args" : {}},
+{"cat" : "Node","pid" :211958,"tid" :211958,"dur" :2,"ts" :62382,"ph" : "X","name" :"Pow_2_fence_before","args" : {"op_name" : "Pow"}},
+{"cat" : "Node","pid" :211958,"tid" :211958,"dur" :2783,"ts" :62393,"ph" : "X","name" :"Pow_2_kernel_time","args" : {"thread_scheduling_stats" : {"main_thread": {"thread_pool_name": "session-1-intra-op", "thread_id": "126317127098752", "block_size": [82375], "core": 10, "Distribution": 4, "DistributionEnqueue": 3, "Run": 2547, "Wait": 50, "WaitRevoke": 0}, "sub_threads": {"126317100009088": {"num_run": 1, "core": 9},"126317089523328": {"num_run": 1, "core": 2},"126317079037568": {"num_run": 1, "core": 3},"126317068551808": {"num_run": 1, "core": 12},"126317058066048": {"num_run": 1, "core": 13},"126317047580288": {"num_run": 1, "core": 6},"126317037094528": {"num_run": 1, "core": 15}}},"output_type_shape" : [{"float":[2635988]}],"output_size" : "10543952","parameter_size" : "4","activation_size" : "10543952","node_index" : "0","input_type_shape" : [{"float":[2635988]},{"float":[]}],"provider" : "CPUExecutionProvider","op_name" : "Pow"}},
+{"cat" : "Node","pid" :211958,"tid" :211958,"dur" :0,"ts" :65182,"ph" : "X","name" :"Pow_2_fence_after","args" : {"op_name" : "Pow"}},
+{"cat" : "Session","pid" :211958,"tid" :211958,"dur" :2811,"ts" :62377,"ph" : "X","name" :"SequentialExecutor::Execute","args" : {}},
+{"cat" : "Session","pid" :211958,"tid" :211958,"dur" :2846,"ts" :62346,"ph" : "X","name" :"model_run","args" : {}}
+]

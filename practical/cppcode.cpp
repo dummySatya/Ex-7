@@ -3,6 +3,8 @@
 #include <sndfile.h>
 #include <vector>
 #include <samplerate.h>
+#include <chrono>
+#include <thread>
 
 std::vector<float> readAudioFile(const char *filename)
 {
@@ -39,21 +41,23 @@ std::vector<float> readAudioFile(const char *filename)
 
 int main()
 {
+    std::this_thread::sleep_for(std::chrono::seconds(3));
     // check providers
-    Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "ONNXModel");
+    Ort::Env env(ORT_LOGGING_LEVEL_VERBOSE, "ONNXModel");
 
     // Create session options
     Ort::SessionOptions session_options;
-    session_options.SetIntraOpNumThreads(1);
     // session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
-
+    session_options.SetIntraOpNumThreads(10);
+    session_options.EnableProfiling("onnx_profile");
+    
     // Create session
     Ort::Session session(env, "./rfft_model.onnx", session_options);
 
     Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
 
     // Input tensor
-    std::vector<float> input_tensor_values = readAudioFile("../audio/small2.wav");
+    std::vector<float> input_tensor_values = readAudioFile("../audio/small.wav");
 
     int inp_shape = input_tensor_values.size();
 
@@ -69,7 +73,7 @@ int main()
 
     // Output tensor
     int out_shape = inp_shape % 2 == 0 ? inp_shape / 2 + 1 : (inp_shape + 1) / 2;
-
+    // out_shape = inp_shape;
     std::vector<float> output_tensor_values(out_shape);
 
     std::vector<int64_t> output_shape = {out_shape};
@@ -86,6 +90,8 @@ int main()
     const char *input_names[] = {"l_audio_"};
     const char *output_names[] = {"abs_1"};
 
+    auto start = std::chrono::steady_clock::now();
+
     // Run the model
     session.Run(Ort::RunOptions{nullptr},
                 input_names, &input_tensor, 1,
@@ -93,6 +99,14 @@ int main()
 
     // Retrieve output data
     float *output_arr = output_tensor.GetTensorMutableData<float>();
+    
+    auto end = std::chrono::steady_clock::now();
+
+    // Calculate duration of execution
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+    std::cout<<"Execution time : "<<duration<<std::endl;
+    // const char* profile_file_path = session
 
     // Printing just first 10 elements for comparison
     std::cout << "Output values: ";
