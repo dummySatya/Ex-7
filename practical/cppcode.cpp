@@ -4,10 +4,12 @@
 #include <vector>
 #include <samplerate.h>
 
-std::vector<float> readAudioFile(const char *filename, int targetSampleRate = 22050) {
+std::vector<float> readAudioFile(const char *filename)
+{
     SF_INFO sfinfo;
     SNDFILE *infile = sf_open(filename, SFM_READ, &sfinfo);
-    if (!infile) {
+    if (!infile)
+    {
         std::cerr << "Error opening file: " << sf_strerror(nullptr) << std::endl;
         return {};
     }
@@ -19,47 +21,21 @@ std::vector<float> readAudioFile(const char *filename, int targetSampleRate = 22
 
     // Convert to mono if stereo (average the channels)
     std::vector<float> monoSamples;
-    if (sfinfo.channels > 1) {
+    if (sfinfo.channels > 1)
+    {
         monoSamples.resize(sfinfo.frames);
-        for (int i = 0; i < sfinfo.frames; ++i) {
-            // Average the stereo channels (simple mono conversion)
+        for (int i = 0; i < sfinfo.frames; ++i)
+        {
             monoSamples[i] = (samples[i * 2] + samples[i * 2 + 1]) / 2.0f;
         }
-    } else {
-        monoSamples = samples; // Already mono, so no need to change
+    }
+    else
+    {
+        monoSamples = samples; // Already mono
     }
 
     return monoSamples;
-
-    // Resample audio to target sample rate (22kHz)
-    int originalSampleRate = sfinfo.samplerate;
-    if (originalSampleRate == targetSampleRate) {
-        // If original and target sample rates are the same, no need to resample
-        return monoSamples;
-    }
-
-    // Resample the audio
-    int outputLength = static_cast<int>(monoSamples.size() * static_cast<float>(targetSampleRate) / originalSampleRate);
-    std::vector<float> resampledAudio(outputLength);
-
-    // Set up the SRC_DATA structure for libsamplerate
-    SRC_DATA srcData;
-    srcData.data_in = monoSamples.data();
-    srcData.input_frames = monoSamples.size();
-    srcData.data_out = resampledAudio.data();
-    srcData.output_frames = outputLength;
-    srcData.src_ratio = static_cast<float>(targetSampleRate) / originalSampleRate;
-
-    // Perform resampling
-    int error = src_simple(&srcData, SRC_SINC_BEST_QUALITY,1);
-    if (error != 0) {
-        std::cerr << "Error in resampling: " << src_strerror(error) << std::endl;
-        return {};
-    }
-
-    return resampledAudio; // Return the resampled mono audio data
 }
-
 
 int main()
 {
@@ -68,29 +44,34 @@ int main()
 
     // Create session options
     Ort::SessionOptions session_options;
-    session_options.SetIntraOpNumThreads(10);
-    session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
+    session_options.SetIntraOpNumThreads(1);
+    // session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
 
     // Create session
     Ort::Session session(env, "./rfft_model.onnx", session_options);
+
     Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
 
-    std::vector<float> input_tensor_values = readAudioFile("../audio/small2.wav"); // Example input, replace with actual audio data
+    // Input tensor
+    std::vector<float> input_tensor_values = readAudioFile("../audio/small2.wav");
+
     int inp_shape = input_tensor_values.size();
-    std::cout<<inp_shape<<std::endl;
-    // inp_shape = 661127;
+
     std::vector<int64_t> input_shape = {inp_shape};
+
+    // Create input tensor with allocated buffer
     Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
-        memoryInfo, 
+        memoryInfo,
         input_tensor_values.data(),
         input_tensor_values.size(),
         input_shape.data(),
         input_shape.size());
 
-    // Prepare output tensor
-    int out_shape = inp_shape % 2 == 0? inp_shape/2 + 1 : (inp_shape + 1) / 2;
-    // out_shape = 330564;
-    std::vector<float> output_tensor_values(out_shape); // Allocate space for 14405 elements
+    // Output tensor
+    int out_shape = inp_shape % 2 == 0 ? inp_shape / 2 + 1 : (inp_shape + 1) / 2;
+
+    std::vector<float> output_tensor_values(out_shape);
+
     std::vector<int64_t> output_shape = {out_shape};
 
     // Create output tensor with allocated buffer
@@ -99,10 +80,13 @@ int main()
         output_tensor_values.data(),
         output_tensor_values.size(),
         output_shape.data(),
-        output_shape.size());    // Run the model
-    const char *input_names[] = {"l_audio_"}; // Match with input name from your ONNX model
-    const char *output_names[] = {"abs_1"};   // Match with output name from your ONNX model
+        output_shape.size());
 
+    // Input and output names (found from Netron)
+    const char *input_names[] = {"l_audio_"};
+    const char *output_names[] = {"abs_1"};
+
+    // Run the model
     session.Run(Ort::RunOptions{nullptr},
                 input_names, &input_tensor, 1,
                 output_names, &output_tensor, 1);
@@ -110,9 +94,9 @@ int main()
     // Retrieve output data
     float *output_arr = output_tensor.GetTensorMutableData<float>();
 
-    // Process output data (for example, print first 10 elements)
+    // Printing just first 10 elements for comparison
     std::cout << "Output values: ";
-    for (size_t i = 0; i < 10; i++)
+    for (int i = 0; i < 10; i++)
     {
         std::cout << output_arr[i] << " ";
     }
