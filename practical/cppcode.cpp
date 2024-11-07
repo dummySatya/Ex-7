@@ -6,6 +6,13 @@
 #include <chrono>
 #include <thread>
 
+size_t nextPowerOf2(size_t n)
+{
+    if (n <= 1)
+        return 1;
+    return static_cast<size_t>(std::pow(2, std::ceil(std::log2(n))));
+}
+
 std::vector<float> readAudioFile(const char *filename)
 {
     SF_INFO sfinfo;
@@ -36,6 +43,10 @@ std::vector<float> readAudioFile(const char *filename)
         monoSamples = samples; // Already mono
     }
 
+    size_t nextPow2 = nextPowerOf2(monoSamples.size());
+    
+    monoSamples.resize(nextPow2, 0.0f);
+
     return monoSamples;
 }
 
@@ -48,7 +59,7 @@ int main()
     // Create session options
     Ort::SessionOptions session_options;
     // session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
-    session_options.SetIntraOpNumThreads(10);
+    session_options.SetIntraOpNumThreads(6);
     session_options.EnableProfiling("onnx_profile");
     
     // Create session
@@ -57,7 +68,7 @@ int main()
     Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
 
     // Input tensor
-    std::vector<float> input_tensor_values = readAudioFile("../audio/small.wav");
+    std::vector<float> input_tensor_values = readAudioFile("../audio/large1.wav");
 
     int inp_shape = input_tensor_values.size();
 
