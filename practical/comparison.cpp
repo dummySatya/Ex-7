@@ -82,7 +82,7 @@ std::vector<std::complex<float>> rfft(std::vector<std::complex<float>> &samples)
     std::vector<std::complex<float>> freqbins(N, 0);
     for (int k = 0; k < M; k++)
     {
-        std::complex<float>exp = static_cast<std::complex<float>>(std::polar(1.0, -2 * M_PI * k / N));
+        std::complex<float> exp = static_cast<std::complex<float>>(std::polar(1.0, -2 * M_PI * k / N));
         std::complex<float> cmplx = exp * Fodd[k];
         freqbins[k] = Feven[k] + cmplx;
         freqbins[k + N / 2] = Feven[k] - cmplx;
@@ -103,13 +103,13 @@ std::vector<float> rfft_mag(std::vector<std::complex<float>> &fft_vals)
 
 std::vector<float> rfft_onnx(std::vector<float> &input_tensor_values)
 {
-    Ort::Env env(ORT_LOGGING_LEVEL_VERBOSE, "ONNXModel");
+    Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "ONNXModel");
 
     // Create session options
     Ort::SessionOptions session_options;
     // session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
     session_options.SetIntraOpNumThreads(6);
-    session_options.EnableProfiling("prof/onnx_profile");
+    session_options.EnableProfiling("profiling/onnx_profile");
 
     // Create session
     Ort::Session session(env, "./rfft_model.onnx", session_options);
@@ -162,17 +162,18 @@ std::vector<float> rfft_onnx(std::vector<float> &input_tensor_values)
     // Calculate duration of execution
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    std::cout << "Execution time : " << duration << std::endl;
-    
+    std::cout << "Execution time for running ONNX model(in ms) : " << duration << std::endl;
+
     return output_tensor_values;
 }
 
 int main()
 {
 
-    std::vector<std::complex<float>> input_tensor_values_complex = readAudioFile("../audio/small.wav");
+    std::vector<std::complex<float>> input_tensor_values_complex = readAudioFile("../audio/large1.wav");
     int n = input_tensor_values_complex.size();
-    std::cout << n << "\n";
+
+    std::cout << "No. of samples: " << n << "\n";
 
     std::vector<float> input_tensor_values(n);
     for (int i = 0; i < n; i++)
@@ -186,14 +187,18 @@ int main()
     std::vector<float> rfftMagnitudePython = rfft_onnx(input_tensor_values);
 
     float diff = 0;
-    for(int i = 0; i < n/2;i++){
-        diff += rfftMagnitudeCpp[i] - rfftMagnitudePython[i];
+    for (int i = 0; i < n / 2; i++)
+    {
+        diff += abs(rfftMagnitudeCpp[i] - rfftMagnitudePython[i]);
     }
-    diff = diff / (n/2);
+    diff = diff / (n / 2);
 
-    std::cout<<"Mean Difference: "<<diff<<std::endl;
+    std::cout << "Mean Absolute Difference: " << diff << "\n";
+
+    std::cout << "First 10 magnitude comparison: \n";
+
     for (int i = 0; i < 10; i++)
     {
-        std::cout << rfftMagnitudeCpp[i] <<" "<<rfftMagnitudePython[i]<< "\n";
+        std::cout << rfftMagnitudeCpp[i] << " " << rfftMagnitudePython[i] << "\n";
     }
 }
