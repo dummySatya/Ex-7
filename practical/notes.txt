@@ -1,8 +1,0 @@
-1. As the audio file grows in size (say like >2MB, SR=22KHz) the mean absolute error btw the ONNX model and actual model starts growing (>3)
-2. Pytorch has 2 options for exporting:
-    a. Using torch.onnx.export : We can't use fft operators here as there is no support. dynamo_export supports these operators.
-    b. Using torch.onnx.dynamo_export : We can't use dynamic sizes for input and output tensors as there is no support of dynamic axes for these operators.
-
-    So in short, there is no way we build the model using a sample dimension and use some other dimension during inference. We need to specify the input and output shape during inference.
-
-3. The cpp conversion of audio into samples is somewhat off by like 1 sample. It's sometimes exactly correct, sometimes 1 more or 1 less that actual size (given by librosa), but if i remove the resampling its all fine.
