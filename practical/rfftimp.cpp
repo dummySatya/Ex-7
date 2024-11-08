@@ -1,3 +1,4 @@
+#include <onnxruntime_cxx_api.h>
 #include <iostream>
 #include <sndfile.h>
 #include <vector>
@@ -6,14 +7,14 @@
 #include <thread>
 #include <complex>
 
-size_t nextPowerOf2(size_t n)
+int nextPowerOf2(int n)
 {
     if (n <= 1)
         return 1;
-    return static_cast<size_t>(std::pow(2, std::ceil(std::log2(n))));
+    return std::pow(2, std::ceil(std::log2(n)));
 }
 
-std::vector<std::complex<double>> readAudioFile(const char *filename)
+std::vector<std::complex<float>> readAudioFile(const char *filename)
 {
     SF_INFO sfinfo;
     SNDFILE *infile = sf_open(filename, SFM_READ, &sfinfo);
@@ -43,67 +44,82 @@ std::vector<std::complex<double>> readAudioFile(const char *filename)
         monoSamples = samples; // Already mono
     }
 
-    size_t nextPow2 = nextPowerOf2(monoSamples.size());
-    
+    int nextPow2 = nextPowerOf2(monoSamples.size());
+
     monoSamples.resize(nextPow2, 0.0f);
 
-    std::vector<std::complex<double>> complexSamples(nextPow2);
+    std::vector<std::complex<float>> complexSamples(nextPow2);
     for (int i = 0; i < nextPow2; ++i)
     {
-        complexSamples[i] = std::complex<double>(monoSamples[i], 0.0);
+        complexSamples[i] = std::complex<float>(monoSamples[i], 0.0);
     }
     return complexSamples;
 }
 
-std::vector<std::complex<double>>rfft(std::vector<std::complex<double>>&samples){
+std::vector<std::complex<float>> rfft(std::vector<std::complex<float>> &samples)
+{
     int N = samples.size();
-    if(N == 1){
+    if (N == 1)
+    {
         return samples;
     }
-    int M = N/2;
+    int M = N / 2;
 
-    std::vector<std::complex<double>>Xeven(M,0);
-    std::vector<std::complex<double>>Xodd(M,0);
+    std::vector<std::complex<float>> Xeven(M, 0);
+    std::vector<std::complex<float>> Xodd(M, 0);
 
-    for(int i = 0; i < M; i++){
+    for (int i = 0; i < M; i++)
+    {
         Xeven[i] = samples[2 * i];
         Xodd[i] = samples[2 * i + 1];
     }
-    
-    std::vector<std::complex<double>>Feven(M,0);
+
+    std::vector<std::complex<float>> Feven(M, 0);
     Feven = rfft(Xeven);
-    std::vector<std::complex<double>>Fodd(M,0);
+    std::vector<std::complex<float>> Fodd(M, 0);
     Fodd = rfft(Xodd);
 
-    std::vector<std::complex<double>>freqbins(N,0);
-    for(int k = 0; k < M; k++){
-        std::complex<double>cmplx = std::polar(1.0,-2*M_PI*k/N) * Fodd[k];
+    std::vector<std::complex<float>> freqbins(N, 0);
+    for (int k = 0; k < M; k++)
+    {
+        std::complex<float>exp = static_cast<std::complex<float>>(std::polar(1.0, -2 * M_PI * k / N));
+        std::complex<float> cmplx = exp * Fodd[k];
         freqbins[k] = Feven[k] + cmplx;
-        freqbins[k + N/2] = Feven[k] - cmplx;
+        freqbins[k + N / 2] = Feven[k] - cmplx;
     }
     return freqbins;
 }
 
-std::vector<double>rfft_mag(std::vector<std::complex<double>>&fft_vals){
+std::vector<float> rfft_mag(std::vector<std::complex<float>> &fft_vals)
+{
     int n = fft_vals.size();
-    std::vector<double>rfftMag(n/2 + 1);
-    for(int i = 0;i <= n/2;i++){
+    std::vector<float> rfftMag(n / 2 + 1);
+    for (int i = 0; i <= n / 2; i++)
+    {
         rfftMag[i] = abs(fft_vals[i]);
     }
     return rfftMag;
 }
 
-int main(){
+int main()
+{
 
-    std::vector<std::complex<double>> input_tensor_values = readAudioFile("../audio/small.wav");
-    int n = input_tensor_values.size();
-    std::cout<<n<<"\n";
+    std::vector<std::complex<float>> input_tensor_values_complex = readAudioFile("../audio/small.wav");
+    int n = input_tensor_values_complex.size();
+    std::cout << n << "\n";
 
-    std::vector<std::complex<double>>fftval = rfft(input_tensor_values);
+    std::vector<double> input_tensor_values(n);
+    for (int i = 0; i < n; i++)
+    {
+        input_tensor_values[i] = input_tensor_values_complex[i].real();
+    }
 
-    std::vector<double>rfftMagnitude = rfft_mag(fftval);
+    std::vector<std::complex<float>> fftval = rfft(input_tensor_values_complex);
 
-    for(int i = 0;i < 10;i++){
-        std::cout<<rfftMagnitude[i]<<"\n";
+    std::vector<float> rfftMagnitude = rfft_mag(fftval);
+
+    for (int i = 0; i < 10; i++)
+    {
+        std::cout << rfftMagnitude[i] << "\n";
     }
 }
