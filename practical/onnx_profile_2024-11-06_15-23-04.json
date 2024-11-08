@@ -1,9 +1,0 @@
-[
-{"cat" : "Session","pid" :212875,"tid" :212875,"dur" :718,"ts" :2,"ph" : "X","name" :"model_loading_uri","args" : {}},
-{"cat" : "Session","pid" :212875,"tid" :212875,"dur" :1863,"ts" :723,"ph" : "X","name" :"session_initialization","args" : {}},
-{"cat" : "Node","pid" :212875,"tid" :212875,"dur" :0,"ts" :57416,"ph" : "X","name" :"Pow_2_fence_before","args" : {"op_name" : "Pow"}},
-{"cat" : "Node","pid" :212875,"tid" :212875,"dur" :2534,"ts" :57420,"ph" : "X","name" :"Pow_2_kernel_time","args" : {"thread_scheduling_stats" : {"main_thread": {"thread_pool_name": "session-1-intra-op", "thread_id": "134205683892608", "block_size": [65900], "core": 2, "Distribution": 3, "DistributionEnqueue": 2, "Run": 2223, "Wait": 274, "WaitRevoke": 0}, "sub_threads": {"134205656794752": {"num_run": 1, "core": 12},"134205646308992": {"num_run": 1, "core": 5},"134205635823232": {"num_run": 1, "core": 6},"134205625337472": {"num_run": 1, "core": 7},"134205614851712": {"num_run": 1, "core": 3},"134205604365952": {"num_run": 1, "core": 13},"134205593880192": {"num_run": 1, "core": 8},"134205583394432": {"num_run": 1, "core": 9},"134205304473216": {"num_run": 1, "core": 4}}},"output_type_shape" : [{"float":[2635988]}],"output_size" : "10543952","parameter_size" : "4","activation_size" : "10543952","node_index" : "0","input_type_shape" : [{"float":[2635988]},{"float":[]}],"provider" : "CPUExecutionProvider","op_name" : "Pow"}},
-{"cat" : "Node","pid" :212875,"tid" :212875,"dur" :0,"ts" :59958,"ph" : "X","name" :"Pow_2_fence_after","args" : {"op_name" : "Pow"}},
-{"cat" : "Session","pid" :212875,"tid" :212875,"dur" :2553,"ts" :57415,"ph" : "X","name" :"SequentialExecutor::Execute","args" : {}},
-{"cat" : "Session","pid" :212875,"tid" :212875,"dur" :2571,"ts" :57402,"ph" : "X","name" :"model_run","args" : {}}
-]
